@@ -1,0 +1,52 @@
+<?php
+session_start();
+?>
+
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<script type="text/javascript" src="llqrcode.js"></script>
+	<script type="text/javascript" src="webqr.js"></script>
+	<head>
+    <title></title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+
+<body>     
+
+<header>
+       <nav>
+       	<div class="main-wrapper">
+        <ul>
+             <li><a href="index.php">Αρχική σελίδα</a></li>
+			 
+        </ul>
+		        
+</div>
+</nav>
+</header>
+
+<body onload="load()">
+
+<p>Σκανάρισμα QR παραγγελίας</p>
+
+<canvas id="qr-canvas" width="640" height="480" style="display:none"></canvas>
+
+<div id="result">Result here</div>
+
+<form action="parakolou8hsh.php" method="post">
+<input id="theresult" type="hidden"  name="theresult">
+
+<input type="submit" name ="submit" onclick="myFunction()"; value="Υποβολή">
+</form>
+<script>
+function myFunction(){
+document.getElementById("theresult").value=document.getElementById("result").innerHTML;
+}
+
+</script>
+<div id="outdiv">
+</div>
+
+</body>
+</html>

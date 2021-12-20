@@ -1,0 +1,197 @@
+
+
+
+
+
+
+
+
+
+<!--<script>
+function getURLParameter(name){return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search)||[,''])[1].replace(/\+/g, '%20'))||null}
+var spm=getURLParameter('search');if(spm!=null){var ifms=document.getElementsByTagName('iframe');for(var ii=0;ii<ifms.length;ii++){var ifm=ifms[ii];if(ifm.getAttribute('src').indexOf('blipstar.com')!=-1)ifm.setAttribute('src',ifm.getAttribute('src')+'&search='+spm);}}
+</script>
+
+<form action='http://www.blipstar.com/show?uid=2435124' onsubmit='return checkLocatorForm();'>
+ <input type='text' name='search' id='locatorsearch' value=''/>
+ <input type='submit' value='Search'/>
+ </form>
+ <script type='text/javascript'>
+ function checkLocatorForm()
+ {
+ var searchvalue=document.getElementById('locatorsearch').value;
+ var ltool=document.getElementById('locatortool');
+ ltool.setAttribute('src','http://www.blipstar.com/show?uid=2435124&search='+escape(searchvalue));
+ ltool.style.display='block';
+ return false;
+ }
+ </script>
+ <iframe id='locatortool' style='display:none' width='802' height='502' scrolling='no' frameborder='0'></iframe>
+
+//
+// Title: StoreLocator
+// Description: a quick store finder script
+// Author: Brian Wente
+ 
+/*$zip = $modx->db->escape($_POST['zip']);
+ 
+function fetch($tpl){
+        // based on version by Doze at http://modxcms.com/forums/index.php/topic,5344.msg41096.html#msg41096
+        global $modx;
+        $template = "";
+        if ($modx->getChunk($tpl) != "") {
+            $template = $modx->getChunk($tpl);
+        } else if(substr($tpl, 0, 6) == "@FILE:") {
+            $template = $this->get_file_contents(substr($tpl, 6));
+        } else if(substr($tpl, 0, 6) == "@CODE:") {
+            $template = substr($tpl, 6);
+        } else {
+            $template = FALSE;
+        }
+        return $template;
+    }
+if(isset($_POST['submitted'])){
+        if(isset($zip)){
+             $modx->setPlaceholder('zip', $zip); 
+        }
+    $output .= fetch($results);
+     
+    $zipLookup = $modx->db->select( '`lat`,`long`', 'zipcodes', 'zip=' . $zip . '', '', '0, 1');
+         
+    $row = $modx->db->getRow( $zipLookup );
+    $lookupLat = $row['lat'] ;
+	$lookupLong = $row['long'] ;
+     
+    $output .= "<div id='map-side-bar'>";
+    // Call loopDbChunk Snippet
+     $output .=  $modx->runSnippet('loopDbChunk', array(
+      'sql' => 'SELECT *, round(sqrt(power(69.1 * (latitude - ' . $lookupLat . ') , 2 ) + power( 69.1 * (longitude - ' . $lookupLong . ') * cos(latitude / 57.3 ) , 2 )),2) AS distance FROM stores ORDER BY distance ASC',
+      'chunkName' => 'displayZips',
+      'perPage' => '5',
+      'orderby' => 'distance',
+    ));
+    $output .= "</div>";  
+} else {
+    $output .= fetch($form);
+}
+ 
+return $output;
+?>*/
+
+
+
+
+
+
+
+-->
+<!DOCTYPE html>
+<head>
+<script type="text/javascript"
+src="https://maps.googleapis.com/maps/api/js?AIzaSyBovcLbQjz-cPLKn455XIqn9tjdfX46qLA&callback=initMap">
+</script>
+<style type="text/css">
+#mapContainer{
+  height: 400px;
+  width: 400px;
+	border:1px solid #333;
+}
+</style>
+  </head>
+  <body>
+
+		<?php
+    if (isset($_POST['zip'])) {
+	if (preg_match("#^\d{5}$#",$findzip)) {
+	$conn = mysqli_connect("localhost", "root", "","zipcodes");
+	mysqli_select_db($conn, "zipcodes");
+	$query = "SELECT lati,longt,city FROM zipcodes WHERE zip=".$findzip." LIMIT 1";
+	$result = mysqli_query($conn, $query);
+	if (mysqli_num_rows($result) > 0) {
+	// grab the latitude, longitude,state and city from our result
+    list($flati,$flongt,$fcity) =  mysqli_fetch_row($result);
+	$query = "SELECT * FROM zipcodes WHERE city='".$fcity."'";
+    $result = mysqli_query($conn, $query);
+      if (mysqli_num_rows($result)<1) {
+        $query = "SELECT * FROM zipcodes";
+        $result = mysqli_query($conn,$query);
+      }
+
+      // now we process the stores to gather their data,
+      //this result should not be empty, so I was lazy and didn't write an else case
+      if (mysqli_num_rows($result) > 0) {
+        while($row = mysqli_fetch_assoc($result)) {
+		$storeinfo[$row['id']] = $row;
+		$dzip = $row['zip'];
+		$query = "SELECT lati,longt FROM zipcodes WHERE zip=".$dzip." LIMIT 1";
+          $result2 = mysqli_query($conn,$query);
+          if (mysqli_num_rows($result2) > 0) {
+            list($dlat,$dlon) =  mysqli_fetch_row($result2);
+			$stores[$row['id']] = calcDist($flat,$flon,$dlat,$dlon);
+          }
+        }
+      }
+	asort($stores);
+	$store = $storeinfo[key($stores)];
+	print_r($store);
+	$maploc = $store['city']." , ".$store['zip'];
+	?>
+	<div id="mapContainer"></div>
+
+<script>
+
+// this is the address we want to map (you can list several and it will mark each one)
+var addresses = new Array("<?=$maploc?>");
+
+// Create and display Map object at the address with zoom level 3
+// Include your application ID.
+var map = new Map("mapContainer", "AIzaSyBovcLbQjz-cPLKn455XIqn9tjdfX46qLA", "<?=$maploc?>", 3);
+map.addEventListener(Map.EVENT_INITIALIZE, onMapInit);
+map.addEventListener(Map.EVENT_MARKER_GEOCODE_SUCCESS,onMarkerGeocode);
+function onMapInit(eventObj) {
+map.addTool( new PanTool(), true );
+for(var i=0; i<addresses .length; i++) {
+
+// if you did do multiple addresses, then this would have to change some (because it would be the same store each iteration)
+var marker = new CustomPOIMarker('<?php echo str_replace("'","\'",$store['company']); ?>', '', '<?=$store['address1']?><br /><?=$store['city']?> <?=$store['state']?>, <?=$store['zip']?>', '0x000000', '0xFFFFFF');
+map.addMarkerByAddress( marker, addresses[i] );
+}
+map.addWidget( new ZoomBarWidget() );
+}
+function onMarkerGeocode(eventObj) {
+var geocodeResponse = eventObj.response;
+}
+</script>
+
+<?php
+    }
+    //if can't find zip return error
+    else {
+      printError("The zip code you entered was not found in our database.  Please try another one.");
+    }
+
+  } else {
+    printError("The zip code must be a 5 digit number. Please try again.");
+  }
+} else {
+  //do nothing
+}
+
+// functions
+function printError($e)
+{
+  echo "<p class='error'>$e";
+}
+function calcDist($lat_A, $long_A, $lat_B, $long_B)
+{
+  $distance = sin(deg2rad($lat_A))
+                * sin(deg2rad($lat_B))
+                + cos(deg2rad($lat_A))
+                * cos(deg2rad($lat_B))
+                * cos(deg2rad($long_A - $long_B));
+  $distance = (rad2deg(acos($distance))) * 69.09;
+  return $distance;
+}
+?>
+</body>
+</html>

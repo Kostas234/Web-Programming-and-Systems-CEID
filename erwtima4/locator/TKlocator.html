@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <title>Εντοπισμός Καταστημάτωνs</title>
+  <style>
+    /* Always set the map height explicitly to define the size of the div
+     * element that contains the map. */
+    #map {
+      height: 100%;
+    }
+    /* Optional: Makes the sample page fill the window. */
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+ </style>
+  </head>
+  <body style="margin:0px; padding:0px;" onload="initMap()">
+   <<div id="map" style="width: 100%; height: 90%"></div>
+  
+	<?php
+
+	if (isset($_POST['zip'])) {
+	// this removes whitespace around the data and the next line makes sure its a 5 digit number
+	$findzip = trim($_POST['zip']);
+	if (preg_match("#^\d{5}$#",$findzip)) {
+		// if we have the right kind of data, connect to the database
+		$conn = mysqli_connect("localhost", "root", "","zipcodes");
+	
+	mysqli_select_db($conn, "zipcodes");
+	$query = "SELECT lati,longt,city FROM zipcodes WHERE zip=".$findzip." LIMIT 1";
+	$result = mysqli_query($conn, $query);
+	if (0<mysqli_num_rows($result)) {
+	// grab the latitude, longitude,state and city from our result
+    list($flati,$flongt,$fcity) =  mysqli_fetch_row($conn,$result);
+	$query = "SELECT * FROM zipcodes WHERE city='".$fcity."'";
+    $result = mysqli_query($conn, $query);
+      if (mysqli_num_rows($result)<1) {
+        $query = "SELECT * FROM zipcodes";
+        $result = mysqli_query($conn,$query);
+      }
+
+      // now we process the stores to gather their data,
+      //this result should not be empty, so I was lazy and didn't write an else case
+      if (0<mysqli_num_rows($result)) {
+        while($row = mysqli_fetch_assoc($result)) {
+		$storeinfo[$row['id']] = $row;
+		$dzip = $row['zip'];
+		$query = "SELECT lati,longt FROM zipcodes WHERE zip=".$dzip." LIMIT 1";
+          $result2 = mysqli_query($conn,$query);
+          if (0<mysqli_num_rows($result2)) {
+            list($dlat,$dlon) =  mysqli_fetch_row($conn, $result2);
+			$stores[$row['id']] = calcDist($flat,$flon,$dlat,$dlon);
+          }
+        }
+      }
+	asort($stores);
+	$store = $storeinfo[key($stores)];
+	print_r($store);
+	$maploc = $store['city']." , ".$store['zip'];
+	?>
+	
+	<div id="mapContainer"></div>
+
+<script>
+
+// this is the address we want to map (you can list several and it will mark each one)
+var addresses = new Array("<?=$maploc?>");
+
+// Create and display Map object at the address with zoom level 3
+// Include your application ID.
+var map = new Map("mapContainer", "AIzaSyBovcLbQjz-cPLKn455XIqn9tjdfX46qLA", "<?=$maploc?>", 3);
+map.addEventListener(Map.EVENT_INITIALIZE, onMapInit);
+map.addEventListener(Map.EVENT_MARKER_GEOCODE_SUCCESS,onMarkerGeocode);
+function onMapInit(eventObj) {
+map.addTool( new PanTool(), true );
+for(var i=0; i<addresses .length; i++) {
+
+// if you did do multiple addresses, then this would have to change some (because it would be the same store each iteration)
+var marker = new CustomPOIMarker('<?php echo str_replace("'","\'",$store['company']); ?>', '', '<?=$store['address1']?><br /><?=$store['city']?> <?=$store['state']?>, <?=$store['zip']?>', '0x000000', '0xFFFFFF');
+map.addMarkerByAddress( marker, addresses[i] );
+}
+map.addWidget( new ZoomBarWidget() );
+}
+function onMarkerGeocode(eventObj) {
+var geocodeResponse = eventObj.response;
+}
+</script>
+
+<?php
+    }
+    //if can't find zip return error
+    else {
+      printError("The zip code you entered was not found in our database.  Please try another one.");
+    }
+
+  } else {
+    printError("The zip code must be a 5 digit number. Please try again.");
+  }
+} else {
+  //do nothing
+}
+
+// functions
+function printError($e)
+{
+  echo "<p class='error'> $e";
+}
+function calcDist($lat_A, $long_A, $lat_B, $long_B)
+{
+  $distance = sin(deg2rad($lat_A))
+                * sin(deg2rad($lat_B))
+                + cos(deg2rad($lat_A))
+                * cos(deg2rad($lat_B))
+                * cos(deg2rad($long_A - $long_B));
+  $distance = (rad2deg(acos($distance))) * 69.09;
+  return $distance;
+}
+?>
+<script async defer
+    src="https://maps.googleapis.com/maps/api/js?AIzaSyBovcLbQjz-cPLKn455XIqn9tjdfX46qLA&callback=initMap">
+    </script>
+  </body>
+</html>

@@ -1,0 +1,42 @@
+<?php
+session_start();
+?>
+
+
+<!DOCTYPE html>
+<html>
+<head>
+     <title></title>
+     <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>     
+
+<header>
+       <nav>
+       	<div class="main-wrapper">
+        <ul>
+             <li><a href="index.php">Αρχική σελίδα</a></li>
+        </ul>
+        <div class="nav-login">
+          <form action="login.inc.php" method="POST">
+              <input type="text" name="emplo2_name" placeholder="username">
+              <input type="text" name="emplo2_pwd" placeholder="password">
+              <input type="text" name="emplo2_kata" placeholder="κατάστημα εργασίας">
+              <button type="submit" name="submit" style=" font-size: 16px; background: #ccc; ">Login </button>
+          </form>
+    <?php
+   if (isset($_SESSION['id'])) {
+        echo "You are logged in!";  
+   } else {
+       echo '<span style="color:#333399;text-align:center; font-size: 140%; ">!You are not logged in!';
+   } 
+   ?>
+   <form action="logout.inc.php">
+   <button style="width: 5em; font-size: 16px; background: #ccc;">Logout </button>
+   </form>
+        </div>
+       	</div>
+       </nav>
+
+
+</header>

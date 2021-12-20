@@ -1,0 +1,22 @@
+SELECT z.zip,
+        z.primary_city,
+        z.latitude, z.longitude,
+        p.distance_unit
+                 * DEGREES(ACOS(COS(RADIANS(p.latpoint))
+                 * COS(RADIANS(z.latitude))
+                 * COS(RADIANS(p.longpoint) - RADIANS(z.longitude))
+                 + SIN(RADIANS(p.latpoint))
+                 * SIN(RADIANS(z.latitude)))) AS distance_in_km
+  FROM zip AS z
+  JOIN (   /* these are the query parameters */
+        SELECT  42.81  AS latpoint,  -70.81 AS longpoint,
+                50.0 AS radius,      111.045 AS distance_unit
+    ) AS p ON 1=1
+  WHERE z.latitude
+     BETWEEN p.latpoint  - (p.radius / p.distance_unit)
+         AND p.latpoint  + (p.radius / p.distance_unit)
+    AND z.longitude
+     BETWEEN p.longpoint - (p.radius / (p.distance_unit * COS(RADIANS(p.latpoint))))
+         AND p.longpoint + (p.radius / (p.distance_unit * COS(RADIANS(p.latpoint))))
+  ORDER BY distance_in_km
+  LIMIT 15
