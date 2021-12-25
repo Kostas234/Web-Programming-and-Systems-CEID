@@ -1,2 +1,2 @@
-# Web-Programming-and-Systems-CEID
-Web Programming and Systems course, CEID, 2017
+Web Programming and Systems Course
+Computer Engineering and Informatics Program, University of Patras 2017
